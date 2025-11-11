@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono } from "next/font/google";
 import "./globals.css";
 import SessionProvider from "@/components/SessionProvider";
+import { ToastProvider } from "@/components/ToastProvider";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
+// Zalando Sans SemiExpanded: Fuente profesional para negocios (títulos, headers, elementos destacados)
+// Se carga desde Google Fonts vía CSS
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
@@ -16,6 +14,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Agencia de Vehículos - Nocturna Genesis",
   description: "Sistema de gestión de inventario y ventas de vehículos",
+  icons: {
+    icon: '/images.jpeg',
+    apple: '/images.jpeg',
+  },
 };
 
 export default function RootLayout({
@@ -25,11 +27,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistMono.variable} antialiased`}
       >
         <SessionProvider>
-          {children}
+          <ToastProvider>
+            {children}
+          </ToastProvider>
         </SessionProvider>
       </body>
     </html>

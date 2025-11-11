@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
       if (response.data && response.data.Results) {
         // Procesar y formatear los datos
         const vehicleInfo: Record<string, string> = {};
-        response.data.Results.forEach((result: any) => {
+        response.data.Results.forEach((result: { Variable: string; Value: string | null }) => {
           if (result.Value && result.Value !== 'Not Applicable') {
             vehicleInfo[result.Variable] = result.Value;
           }
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
         { error: 'No se encontró información para este VIN' },
         { status: 404 }
       );
-    } catch (apiError: any) {
+    } catch (apiError: unknown) {
       console.error('Error al consultar API externa:', apiError);
       
       // Fallback: retornar información simulada si la API falla

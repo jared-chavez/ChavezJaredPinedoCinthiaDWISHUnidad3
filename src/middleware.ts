@@ -8,24 +8,69 @@ export async function middleware(request: NextRequest) {
   const session = await auth();
   const { pathname } = request.nextUrl;
   
-  // Rutas públicas
-  const publicRoutes = ['/login', '/register', '/api/auth'];
-  const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
+  // Rutas completamente públicas (sin autenticación)
+  const publicRoutes = [
+    '/',                    // Landing page
+    '/login', 
+    '/register', 
+    '/api/auth',
+    '/inventory',           // Inventario público (solo lectura)
+  ];
   
-  // Si es una ruta pública, permitir acceso
-  if (isPublicRoute) {
+  // APIs públicas (solo lectura)
+  const publicApiRoutes = [
+    '/api/vehicles',        // GET de vehículos es público
+  ];
+  
+  // Verificar si es una ruta pública
+  const isPublicRoute = publicRoutes.some(route => 
+    pathname === route || pathname.startsWith(route + '/')
+  );
+  
+  // Verificar si es una API pública (solo GET)
+  const isPublicApi = publicApiRoutes.some(route => 
+    pathname.startsWith(route) && request.method === 'GET'
+  );
+  
+  // Si es una ruta pública o API pública, permitir acceso
+  if (isPublicRoute || isPublicApi) {
     return NextResponse.next();
   }
   
-  // Si no hay sesión y no es ruta pública, redirigir a login
-  if (!session) {
+  // Rutas protegidas que requieren autenticación
+  const protectedRoutes = [
+    '/dashboard',
+    '/sales',
+    '/users',
+    '/inventory/new',       // Crear vehículo requiere auth
+  ];
+  
+  const isProtectedRoute = protectedRoutes.some(route => 
+    pathname.startsWith(route)
+  );
+  
+  // Si es una ruta protegida y no hay sesión, redirigir a login
+  if (isProtectedRoute && !session) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('callbackUrl', pathname);
     return NextResponse.redirect(loginUrl);
   }
   
-  // Proteger rutas de API (excepto auth)
+  // Proteger rutas de API que requieren autenticación
   if (pathname.startsWith('/api/') && !pathname.startsWith('/api/auth')) {
+    // APIs públicas ya fueron manejadas arriba
+    if (isPublicApi) {
+      return NextResponse.next();
+    }
+    
+    // Si no hay sesión, devolver JSON error (no HTML redirect)
+    if (!session) {
+      return NextResponse.json(
+        { error: 'No autorizado' },
+        { status: 401 }
+      );
+    }
+    
     // Verificar roles para rutas administrativas
     if (pathname.startsWith('/api/users') && session.user.role !== 'admin') {
       return NextResponse.json(

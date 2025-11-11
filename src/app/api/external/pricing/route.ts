@@ -3,7 +3,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import axios from 'axios';
 
 export async function GET(request: NextRequest) {
   try {
@@ -51,7 +50,7 @@ export async function GET(request: NextRequest) {
         source: 'Market Price API (Simulated)',
         note: 'Esta es una estimación simulada. En producción, conectar con una API real de precios.',
       });
-    } catch (apiError: any) {
+    } catch (apiError: unknown) {
       console.error('Error al consultar API de precios:', apiError);
       
       return NextResponse.json(

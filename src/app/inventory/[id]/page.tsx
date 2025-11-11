@@ -2,6 +2,7 @@ import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { vehicleDB } from '@/lib/db';
 import Navbar from '@/components/Navbar';
+import LandingNavbar from '@/components/LandingNavbar';
 import VehicleDetail from '@/components/VehicleDetail';
 
 export default async function VehicleDetailPage({
@@ -11,9 +12,8 @@ export default async function VehicleDetailPage({
 }) {
   const session = await auth();
   
-  if (!session) {
-    redirect('/login');
-  }
+  // Permitir acceso público (solo lectura)
+  // No redirigir si no hay sesión
 
   const { id } = await params;
   const vehicle = await vehicleDB.findById(id);
@@ -24,7 +24,7 @@ export default async function VehicleDetailPage({
 
   return (
     <>
-      <Navbar />
+      {session ? <Navbar /> : <LandingNavbar />}
       <VehicleDetail vehicle={vehicle} session={session} />
     </>
   );
