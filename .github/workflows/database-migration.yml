@@ -1,0 +1,54 @@
+# Workflow para ejecutar migraciones de base de datos
+# Se ejecuta manualmente o en push a main después de cambios en schema.prisma
+
+name: Database Migration
+
+on:
+  workflow_dispatch:  # Solo ejecución manual
+  push:
+    branches:
+      - main
+    paths:
+      - 'prisma/schema.prisma'
+      - 'prisma/migrations/**'
+
+env:
+  NODE_VERSION: '20.x'
+
+jobs:
+  migrate:
+    name: Run Database Migrations
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Validar schema Prisma
+        run: npx prisma validate
+
+      - name: Generar cliente Prisma
+        run: npm run db:generate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Ejecutar migraciones
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Verificar migraciones
+        run: |
+          echo "✅ Migraciones aplicadas exitosamente"
+          npx prisma migrate status
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}

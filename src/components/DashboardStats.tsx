@@ -25,6 +25,7 @@ export default function DashboardStats() {
   const { stats, loading, error } = useDashboard();
   const { data: session } = useSession();
 
+  // Siempre renderizar algo, nunca retornar null después de hooks
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -41,7 +42,13 @@ export default function DashboardStats() {
     );
   }
 
-  if (!stats) return null;
+  if (!stats) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-gray-600 dark:text-gray-400">No hay estadísticas disponibles</div>
+      </div>
+    );
+  }
 
   const canViewAnalytics = session?.user?.role 
     ? ROLE_PERMISSIONS[session.user.role as keyof typeof ROLE_PERMISSIONS]?.canViewAnalytics 
@@ -102,7 +109,7 @@ export default function DashboardStats() {
 
       {/* Métricas secundarias */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
           <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
             Estado de Vehículos
           </h3>
@@ -126,7 +133,7 @@ export default function DashboardStats() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
           <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
             Métricas de Ventas
           </h3>
@@ -146,7 +153,7 @@ export default function DashboardStats() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
           <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
             Usuarios por Rol
           </h3>
@@ -165,7 +172,7 @@ export default function DashboardStats() {
       {canViewAnalytics && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Gráfico de ventas mensuales */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Ventas Mensuales (Últimos 6 meses)
             </h3>
@@ -183,7 +190,7 @@ export default function DashboardStats() {
           </div>
 
           {/* Gráfico de vehículos por marca */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Vehículos por Marca (Top 5)
             </h3>
@@ -199,7 +206,7 @@ export default function DashboardStats() {
           </div>
 
           {/* Gráfico de tipo de combustible */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Vehículos por Tipo de Combustible
             </h3>
@@ -228,7 +235,7 @@ export default function DashboardStats() {
           </div>
 
           {/* Gráfico de método de pago */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Ventas por Método de Pago
             </h3>
@@ -272,22 +279,75 @@ function MetricCard({
   subtitle?: string;
   color: 'blue' | 'green' | 'purple' | 'orange';
 }) {
-  const colorClasses = {
-    blue: 'text-blue-600 dark:text-blue-400',
-    green: 'text-green-600 dark:text-green-400',
-    purple: 'text-purple-600 dark:text-purple-400',
-    orange: 'text-orange-600 dark:text-orange-400',
+  const colorConfig = {
+    blue: {
+      bg: 'from-blue-500 to-blue-600',
+      text: 'text-blue-600 dark:text-blue-400',
+      iconBg: 'bg-blue-100 dark:bg-blue-900/30',
+      icon: 'text-blue-600 dark:text-blue-400',
+    },
+    green: {
+      bg: 'from-green-500 to-green-600',
+      text: 'text-green-600 dark:text-green-400',
+      iconBg: 'bg-green-100 dark:bg-green-900/30',
+      icon: 'text-green-600 dark:text-green-400',
+    },
+    purple: {
+      bg: 'from-purple-500 to-purple-600',
+      text: 'text-purple-600 dark:text-purple-400',
+      iconBg: 'bg-purple-100 dark:bg-purple-900/30',
+      icon: 'text-purple-600 dark:text-purple-400',
+    },
+    orange: {
+      bg: 'from-orange-500 to-orange-600',
+      text: 'text-orange-600 dark:text-orange-400',
+      iconBg: 'bg-orange-100 dark:bg-orange-900/30',
+      icon: 'text-orange-600 dark:text-orange-400',
+    },
+  };
+
+  const config = colorConfig[color];
+  const icons = {
+    blue: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+    green: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+    purple: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+      </svg>
+    ),
+    orange: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+    ),
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-      <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">{title}</h3>
-      <p className={`text-3xl font-bold mt-2 ${colorClasses[color]}`}>
-        {typeof value === 'number' ? value.toLocaleString() : value}
-      </p>
-      {subtitle && (
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{subtitle}</p>
-      )}
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-lg transition-all duration-200">
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">{title}</p>
+          <p className={`text-3xl font-bold ${config.text} mb-1`}>
+            {typeof value === 'number' ? value.toLocaleString() : value}
+          </p>
+          {subtitle && (
+            <p className="text-sm text-gray-500 dark:text-gray-400">{subtitle}</p>
+          )}
+        </div>
+        <div className={`${config.iconBg} rounded-lg p-3`}>
+          <div className={config.icon}>
+            {icons[color]}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

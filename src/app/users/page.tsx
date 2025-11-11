@@ -5,6 +5,8 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import Navbar from '@/components/Navbar';
+import ResponsiveTable from '@/components/ResponsiveTable';
+import RoleBadge from '@/components/RoleBadge';
 
 interface User {
   id: string;
@@ -26,7 +28,7 @@ export default function UsersPage() {
     name: '',
     email: '',
     password: '',
-    role: 'employee' as const,
+    role: 'emprendedores' as const,
   });
 
   useEffect(() => {
@@ -56,7 +58,7 @@ export default function UsersPage() {
       const response = await axios.post('/api/users', formData);
       if (response.status === 201) {
         setShowForm(false);
-        setFormData({ name: '', email: '', password: '', role: 'employee' });
+        setFormData({ name: '', email: '', password: '', role: 'emprendedores' });
         fetchUsers();
       }
     } catch (err: any) {
@@ -163,8 +165,8 @@ export default function UsersPage() {
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     >
                       <option value="admin">Administrador</option>
-                      <option value="employee">Empleado</option>
-                      <option value="viewer">Visualizador</option>
+                      <option value="emprendedores">Emprendedor</option>
+                      <option value="usuarios_regulares">Usuario Regular</option>
                     </select>
                   </div>
                 </div>
@@ -188,46 +190,41 @@ export default function UsersPage() {
             </div>
           )}
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Nombre
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Rol
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Fecha de Registro
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {users.map((user) => (
-                  <tr key={user.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                      {user.name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      {user.email}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
-                        {user.role}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      {new Date(user.createdAt).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ResponsiveTable
+            data={users}
+            columns={[
+              {
+                key: 'name',
+                label: 'Nombre',
+                mobileLabel: 'Nombre',
+                render: (user) => (
+                  <span className="font-medium">{user.name}</span>
+                ),
+              },
+              {
+                key: 'email',
+                label: 'Email',
+                mobileLabel: 'Email',
+              },
+              {
+                key: 'role',
+                label: 'Rol',
+                mobileLabel: 'Rol',
+                render: (user) => (
+                  <RoleBadge role={user.role as any} />
+                ),
+              },
+              {
+                key: 'createdAt',
+                label: 'Fecha de Registro',
+                mobileLabel: 'Fecha de Registro',
+                render: (user) => (
+                  <span>{new Date(user.createdAt).toLocaleDateString()}</span>
+                ),
+              },
+            ]}
+            emptyMessage="No hay usuarios registrados"
+          />
         </div>
       </div>
     </>

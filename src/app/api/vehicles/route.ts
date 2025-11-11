@@ -3,22 +3,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { vehicleDB } from '@/lib/db';
-import { vehicleSchema, updateVehicleSchema } from '@/lib/validations';
+import { vehicleSchema } from '@/lib/validations';
+import { Vehicle } from '@/types';
 
 // GET - Obtener todos los vehículos
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    // Permitir acceso público al inventario (solo lectura)
+    // No requerir autenticación para GET
     
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     
     let vehicles;
     if (status) {
-      vehicles = await vehicleDB.findByStatus(status as any);
+      vehicles = await vehicleDB.findByStatus(status as Vehicle['status']);
     } else {
       vehicles = await vehicleDB.getAll();
     }
@@ -41,8 +40,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
     
-    // Solo admin y employee pueden crear vehículos
-    if (session.user.role !== 'admin' && session.user.role !== 'employee') {
+    // Solo admin y emprendedores pueden crear vehículos
+    if (session.user.role !== 'admin' && session.user.role !== 'emprendedores') {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
     
@@ -58,10 +57,10 @@ export async function POST(request: NextRequest) {
     });
     
     return NextResponse.json(vehicle, { status: 201 });
-  } catch (error: any) {
-    if (error.name === 'ZodError') {
+  } catch (error: unknown) {
+    if (error instanceof Error && 'errors' in error) {
       return NextResponse.json(
-        { error: 'Datos inválidos', details: error.errors },
+        { error: 'Datos inválidos', details: (error as { errors: unknown }).errors },
         { status: 400 }
       );
     }

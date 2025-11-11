@@ -22,19 +22,19 @@ async function main() {
   });
   console.log('✅ Usuario administrador creado:', admin.email);
 
-  // Crear usuario empleado de ejemplo
-  const employeePassword = await bcrypt.hash('Employee123!', 10);
-  const employee = await prisma.user.upsert({
-    where: { email: 'empleado@agencia.com' },
+  // Crear usuario emprendedor de ejemplo
+  const emprendedorPassword = await bcrypt.hash('Emprendedor123!', 10);
+  const emprendedor = await prisma.user.upsert({
+    where: { email: 'emprendedor@agencia.com' },
     update: {},
     create: {
-      email: 'empleado@agencia.com',
-      name: 'Empleado Ejemplo',
-      password: employeePassword,
-      role: 'employee',
+      email: 'emprendedor@agencia.com',
+      name: 'Emprendedor Ejemplo',
+      password: emprendedorPassword,
+      role: 'emprendedores',
     },
   });
-  console.log('✅ Usuario empleado creado:', employee.email);
+  console.log('✅ Usuario emprendedor creado:', emprendedor.email);
 
   // Crear algunos vehículos de ejemplo
   const vehicles = [

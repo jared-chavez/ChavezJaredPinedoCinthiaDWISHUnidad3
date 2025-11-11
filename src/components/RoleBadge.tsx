@@ -10,8 +10,8 @@ interface RoleBadgeProps {
 export default function RoleBadge({ role, className = '' }: RoleBadgeProps) {
   const colorClasses = {
     admin: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-    employee: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-    viewer: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
+    emprendedores: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+    usuarios_regulares: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
   };
 
   return (

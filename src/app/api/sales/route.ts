@@ -32,8 +32,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
     
-    // Solo admin y employee pueden crear ventas
-    if (session.user.role !== 'admin' && session.user.role !== 'employee') {
+    // Solo admin y emprendedores pueden crear ventas
+    if (session.user.role !== 'admin' && session.user.role !== 'emprendedores') {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
     
@@ -68,10 +68,10 @@ export async function POST(request: NextRequest) {
     await vehicleDB.update(validated.vehicleId, { status: 'sold' });
     
     return NextResponse.json(sale, { status: 201 });
-  } catch (error: any) {
-    if (error.name === 'ZodError') {
+  } catch (error: unknown) {
+    if (error instanceof Error && 'errors' in error) {
       return NextResponse.json(
-        { error: 'Datos inválidos', details: error.errors },
+        { error: 'Datos inválidos', details: (error as { errors: unknown }).errors },
         { status: 400 }
       );
     }

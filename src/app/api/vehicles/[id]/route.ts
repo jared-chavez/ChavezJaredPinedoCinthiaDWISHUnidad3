@@ -11,10 +11,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    // Permitir acceso público al detalle (solo lectura)
+    // No requerir autenticación para GET
     
     const { id } = await params;
     const vehicle = await vehicleDB.findById(id);
@@ -47,8 +45,8 @@ export async function PUT(
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
     
-    // Solo admin y employee pueden actualizar
-    if (session.user.role !== 'admin' && session.user.role !== 'employee') {
+    // Solo admin y emprendedores pueden actualizar
+    if (session.user.role !== 'admin' && session.user.role !== 'emprendedores') {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
     
@@ -68,10 +66,10 @@ export async function PUT(
     }
     
     return NextResponse.json(vehicle);
-  } catch (error: any) {
-    if (error.name === 'ZodError') {
+  } catch (error: unknown) {
+    if (error instanceof Error && 'errors' in error) {
       return NextResponse.json(
-        { error: 'Datos inválidos', details: error.errors },
+        { error: 'Datos inválidos', details: (error as { errors: unknown }).errors },
         { status: 400 }
       );
     }
