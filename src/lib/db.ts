@@ -35,7 +35,7 @@ export const userDB = {
       email: user.email,
       name: user.name,
       password: user.password,
-      role: user.role as 'admin' | 'employee' | 'viewer',
+      role: user.role as 'admin' | 'emprendedores' | 'usuarios_regulares',
       createdAt: user.createdAt,
     } : null;
   },
@@ -49,7 +49,7 @@ export const userDB = {
       email: user.email,
       name: user.name,
       password: user.password,
-      role: user.role as 'admin' | 'employee' | 'viewer',
+      role: user.role as 'admin' | 'emprendedores' | 'usuarios_regulares',
       createdAt: user.createdAt,
     } : null;
   },
@@ -68,7 +68,7 @@ export const userDB = {
       email: newUser.email,
       name: newUser.name,
       password: newUser.password,
-      role: newUser.role as 'admin' | 'employee' | 'viewer',
+      role: newUser.role as 'admin' | 'emprendedores' | 'usuarios_regulares',
       createdAt: newUser.createdAt,
     };
   },
@@ -82,7 +82,7 @@ export const userDB = {
       email: user.email,
       name: user.name,
       password: user.password,
-      role: user.role as 'admin' | 'employee' | 'viewer',
+      role: user.role as 'admin' | 'emprendedores' | 'usuarios_regulares',
       createdAt: user.createdAt,
     }));
   },

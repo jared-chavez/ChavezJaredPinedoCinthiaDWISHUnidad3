@@ -16,7 +16,7 @@ export async function GET() {
     
     const users = await userDB.getAll();
     // No retornar contraseñas
-    const usersWithoutPasswords = users.map(({ password, ...user }) => user);
+    const usersWithoutPasswords = users.map(({ password: _password, ...user }) => user);
     
     return NextResponse.json(usersWithoutPasswords);
   } catch (error) {
@@ -60,13 +60,13 @@ export async function POST(request: NextRequest) {
     });
     
     // No retornar contraseña
-    const { password, ...userWithoutPassword } = user;
+    const { password: _password, ...userWithoutPassword } = user;
     
     return NextResponse.json(userWithoutPassword, { status: 201 });
-  } catch (error: any) {
-    if (error.name === 'ZodError') {
+  } catch (error: unknown) {
+    if (error instanceof Error && 'errors' in error) {
       return NextResponse.json(
-        { error: 'Datos inválidos', details: error.errors },
+        { error: 'Datos inválidos', details: (error as { errors: unknown }).errors },
         { status: 400 }
       );
     }

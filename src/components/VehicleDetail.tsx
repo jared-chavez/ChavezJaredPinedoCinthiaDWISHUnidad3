@@ -5,16 +5,20 @@ import { Session } from 'next-auth';
 import { useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/components/ToastProvider';
+import ConfirmDialog from './ConfirmDialog';
 
 interface VehicleDetailProps {
   vehicle: Vehicle;
-  session: Session;
+  session: Session | null;
 }
 
 export default function VehicleDetail({ vehicle, session }: VehicleDetailProps) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [showSaleForm, setShowSaleForm] = useState(false);
   const [showPricing, setShowPricing] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [pricingInfo, setPricingInfo] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -28,7 +32,7 @@ export default function VehicleDetail({ vehicle, session }: VehicleDetailProps) 
     notes: '',
   });
 
-  const canEdit = session.user.role === 'admin' || session.user.role === 'employee';
+  const canEdit = session && (session.user.role === 'admin' || session.user.role === 'emprendedores');
   const canSell = canEdit && vehicle.status === 'available';
 
   const handleGetPricing = async () => {
@@ -59,15 +63,36 @@ export default function VehicleDetail({ vehicle, session }: VehicleDetailProps) 
       });
 
       if (response.status === 201) {
+        showToast('Venta registrada exitosamente', 'success');
         router.push('/sales');
         router.refresh();
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Error al registrar venta');
+      const errorMsg = err.response?.data?.error || 'Error al registrar venta';
+      setError(errorMsg);
+      showToast(errorMsg, 'error');
     } finally {
       setLoading(false);
     }
   };
+
+  const handleDelete = async () => {
+    try {
+      setLoading(true);
+      await axios.delete(`/api/vehicles/${vehicle.id}`);
+      showToast('Vehículo eliminado exitosamente', 'success');
+      router.push('/inventory');
+      router.refresh();
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.error || 'Error al eliminar vehículo';
+      showToast(errorMsg, 'error');
+    } finally {
+      setLoading(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  const canDelete = session && session.user.role === 'admin';
 
   const statusColors = {
     available: 'bg-green-100 text-green-800',
@@ -87,10 +112,13 @@ export default function VehicleDetail({ vehicle, session }: VehicleDetailProps) 
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <button
-          onClick={() => router.push('/inventory')}
-          className="mb-4 text-blue-600 hover:text-blue-700 font-medium"
+          onClick={() => router.back()}
+          className="mb-4 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium flex items-center gap-2"
         >
-          ← Volver al inventario
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Volver
         </button>
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
@@ -159,6 +187,18 @@ export default function VehicleDetail({ vehicle, session }: VehicleDetailProps) 
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50"
                   >
                     {loading ? 'Consultando...' : 'Consultar Precios de Mercado (Web Service)'}
+                  </button>
+                </div>
+              )}
+
+              {canDelete && (
+                <div className="mt-4">
+                  <button
+                    onClick={() => setShowDeleteConfirm(true)}
+                    disabled={loading}
+                    className="w-full bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50"
+                  >
+                    Eliminar Vehículo
                   </button>
                 </div>
               )}
@@ -305,6 +345,17 @@ export default function VehicleDetail({ vehicle, session }: VehicleDetailProps) 
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="Eliminar Vehículo"
+        message={`¿Estás seguro de que deseas eliminar el vehículo ${vehicle.brand} ${vehicle.model}? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        type="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </div>
   );
 }

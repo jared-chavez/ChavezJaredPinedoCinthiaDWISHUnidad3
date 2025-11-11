@@ -1,0 +1,80 @@
+# Checks para Pull Requests
+# Se ejecuta en todos los PRs independientemente de la rama destino
+
+name: PR Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+      - development
+
+env:
+  NODE_VERSION: '20.x'
+
+jobs:
+  # Job: Verificación completa antes de merge
+  pr-validation:
+    name: PR Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Necesario para verificar commits
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Ejecutar ESLint
+        run: npm run lint
+
+      - name: Verificar tipos TypeScript
+        run: npx tsc --noEmit
+
+      - name: Validar schema Prisma
+        run: npx prisma validate
+
+      - name: Generar cliente Prisma
+        run: npm run db:generate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/test_db?schema=public' }}
+
+      - name: Build aplicación
+        run: npm run build
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/test_db?schema=public' }}
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET || 'test-secret-key-for-ci' }}
+
+      - name: Verificar que no hay errores de build
+        run: |
+          if [ -d ".next" ]; then
+            echo "✅ Build exitoso"
+          else
+            echo "❌ Build falló"
+            exit 1
+          fi
+
+  # Job: Verificar que el PR tiene descripción
+  pr-description:
+    name: PR Description Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Verificar descripción del PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            if (!pr.body || pr.body.trim().length < 10) {
+              core.setFailed('El PR debe tener una descripción de al menos 10 caracteres');
+            } else {
+              console.log('✅ PR tiene descripción válida');
+            }

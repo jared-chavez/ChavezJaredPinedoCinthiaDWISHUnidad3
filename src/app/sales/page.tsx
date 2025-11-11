@@ -1,32 +1,80 @@
-import { auth } from '@/lib/auth';
-import { redirect } from 'next/navigation';
-import { saleDB, vehicleDB } from '@/lib/db';
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
+import ResponsiveTable from '@/components/ResponsiveTable';
+import { apiClient } from '@/lib/api-client';
+import { Sale } from '@/types';
 
-export default async function SalesPage() {
-  const session = await auth();
-  
-  if (!session) {
-    redirect('/login');
+interface SaleWithVehicle extends Sale {
+  vehicle: string;
+}
+
+export default function SalesPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [sales, setSales] = useState<SaleWithVehicle[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+
+  useEffect(() => {
+    if (status === 'loading') return;
+    
+    if (!session) {
+      router.push('/login');
+      return;
+    }
+
+    if (session.user.role !== 'admin' && session.user.role !== 'emprendedores') {
+      router.push('/dashboard');
+      return;
+    }
+
+    fetchSales();
+  }, [session, status, router]);
+
+  const fetchSales = async () => {
+    try {
+      const [salesData, vehiclesData] = await Promise.all([
+        apiClient.getSales(),
+        apiClient.getVehicles(),
+      ]);
+
+      const salesWithVehicles: SaleWithVehicle[] = salesData.map((sale) => {
+        const vehicle = vehiclesData.find((v) => v.id === sale.vehicleId);
+        return {
+          ...sale,
+          vehicle: vehicle
+            ? `${vehicle.brand} ${vehicle.model} ${vehicle.year}`
+            : 'Vehículo no encontrado',
+        };
+      });
+
+      setSales(salesWithVehicles);
+      setTotalRevenue(salesWithVehicles.reduce((sum, sale) => sum + sale.salePrice, 0));
+    } catch (error) {
+      console.error('Error fetching sales:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (status === 'loading' || loading) {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+          <p className="text-gray-600 dark:text-gray-400">Cargando...</p>
+        </div>
+      </>
+    );
   }
 
-  if (session.user.role !== 'admin' && session.user.role !== 'employee') {
-    redirect('/dashboard');
+  if (!session || (session.user.role !== 'admin' && session.user.role !== 'emprendedores')) {
+    return null;
   }
-
-  const sales = await saleDB.getAll();
-  const vehicles = await vehicleDB.getAll();
-  
-  // Enriquecer ventas con información del vehículo
-  const salesWithVehicles = sales.map(sale => {
-    const vehicle = vehicles.find(v => v.id === sale.vehicleId);
-    return {
-      ...sale,
-      vehicle: vehicle ? `${vehicle.brand} ${vehicle.model} ${vehicle.year}` : 'Vehículo no encontrado',
-    };
-  });
-
-  const totalRevenue = sales.reduce((sum, sale) => sum + sale.salePrice, 0);
 
   return (
     <>
@@ -42,62 +90,62 @@ export default async function SalesPage() {
             </p>
           </div>
 
-          {salesWithVehicles.length === 0 ? (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-12 text-center">
-              <p className="text-gray-600 dark:text-gray-400 text-lg">
-                No hay ventas registradas
-              </p>
-            </div>
-          ) : (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-700">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Fecha
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Vehículo
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Cliente
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Precio
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Método de Pago
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {salesWithVehicles.map((sale) => (
-                    <tr key={sale.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {new Date(sale.saleDate).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {sale.vehicle}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        <div>
-                          <div className="font-medium">{sale.customerName}</div>
-                          <div className="text-gray-500 dark:text-gray-400">{sale.customerEmail}</div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">
-                        ${sale.salePrice.toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {sale.paymentMethod === 'cash' ? 'Efectivo' : 
-                         sale.paymentMethod === 'credit' ? 'Tarjeta' : 'Financiamiento'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <ResponsiveTable
+            data={sales}
+            columns={[
+              {
+                key: 'saleDate',
+                label: 'Fecha',
+                mobileLabel: 'Fecha',
+                render: (sale) => (
+                  <span>{new Date(sale.saleDate).toLocaleDateString()}</span>
+                ),
+              },
+              {
+                key: 'vehicle',
+                label: 'Vehículo',
+                mobileLabel: 'Vehículo',
+              },
+              {
+                key: 'customerName',
+                label: 'Cliente',
+                mobileLabel: 'Cliente',
+                render: (sale) => (
+                  <div>
+                    <div className="font-medium">{sale.customerName}</div>
+                    <div className="text-gray-500 dark:text-gray-400 text-xs">
+                      {sale.customerEmail}
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                key: 'salePrice',
+                label: 'Precio',
+                mobileLabel: 'Precio de Venta',
+                render: (sale) => (
+                  <span className="font-semibold text-green-600">
+                    ${sale.salePrice.toLocaleString()}
+                  </span>
+                ),
+              },
+              {
+                key: 'paymentMethod',
+                label: 'Método de Pago',
+                mobileLabel: 'Método de Pago',
+                render: (sale) => (
+                  <span>
+                    {sale.paymentMethod === 'cash'
+                      ? 'Efectivo'
+                      : sale.paymentMethod === 'credit'
+                      ? 'Tarjeta'
+                      : 'Financiamiento'}
+                  </span>
+                ),
+              },
+            ]}
+            emptyMessage="No hay ventas registradas"
+          />
         </div>
       </div>
     </>

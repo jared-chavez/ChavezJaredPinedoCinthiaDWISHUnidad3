@@ -5,7 +5,7 @@ export interface User {
   email: string;
   name: string;
   password: string; // Hasheada
-  role: 'admin' | 'employee' | 'viewer';
+  role: 'admin' | 'emprendedores' | 'usuarios_regulares';
   createdAt: Date;
 }
 

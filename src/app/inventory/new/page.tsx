@@ -5,30 +5,45 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import axios from 'axios';
 import Navbar from '@/components/Navbar';
+import { useToast } from '@/components/ToastProvider';
+import { Vehicle } from '@/types';
 
 export default function NewVehiclePage() {
   const router = useRouter();
   const { data: session } = useSession();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [externalInfo, setExternalInfo] = useState<any>(null);
+  const [externalInfo, setExternalInfo] = useState<{ source: string; info?: Record<string, string> } | null>(null);
   
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    brand: string;
+    model: string;
+    year: number;
+    color: string;
+    price: number;
+    mileage: number;
+    fuelType: Vehicle['fuelType'];
+    transmission: Vehicle['transmission'];
+    status: Vehicle['status'];
+    vin: string;
+    description: string;
+  }>({
     brand: '',
     model: '',
     year: new Date().getFullYear(),
     color: '',
     price: 0,
     mileage: 0,
-    fuelType: 'gasoline' as const,
-    transmission: 'automatic' as const,
-    status: 'available' as const,
+    fuelType: 'gasoline',
+    transmission: 'automatic',
+    status: 'available',
     vin: '',
     description: '',
   });
 
   useEffect(() => {
-    if (!session || (session.user.role !== 'admin' && session.user.role !== 'employee')) {
+    if (!session || (session.user.role !== 'admin' && session.user.role !== 'emprendedores')) {
       router.push('/inventory');
     }
   }, [session, router]);
@@ -51,8 +66,10 @@ export default function NewVehiclePage() {
           setFormData(prev => ({ ...prev, year: parseInt(response.data.info['Model Year']) || prev.year }));
         }
       }
-    } catch (err: any) {
-      setError('Error al obtener información del VIN: ' + (err.response?.data?.error || err.message));
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+      const axiosError = err as { response?: { data?: { error?: string } } };
+      setError('Error al obtener información del VIN: ' + (axiosError.response?.data?.error || errorMessage));
     }
   };
 
@@ -64,19 +81,23 @@ export default function NewVehiclePage() {
     try {
       const response = await axios.post('/api/vehicles', formData);
       if (response.status === 201) {
+        showToast('Vehículo creado exitosamente', 'success');
         router.push('/inventory');
       }
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Error al crear vehículo');
-      if (err.response?.data?.details) {
-        setError(err.response.data.error + ': ' + JSON.stringify(err.response.data.details));
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { error?: string; details?: unknown } } };
+      const errorMsg = axiosError.response?.data?.error || 'Error al crear vehículo';
+      setError(errorMsg);
+      showToast(errorMsg, 'error');
+      if (axiosError.response?.data?.details) {
+        setError((axiosError.response.data.error || 'Error') + ': ' + JSON.stringify(axiosError.response.data.details));
       }
     } finally {
       setLoading(false);
     }
   };
 
-  if (!session || (session.user.role !== 'admin' && session.user.role !== 'employee')) {
+  if (!session || (session.user.role !== 'admin' && session.user.role !== 'emprendedores')) {
     return null;
   }
 
@@ -224,7 +245,7 @@ export default function NewVehiclePage() {
                 </label>
                 <select
                   value={formData.fuelType}
-                  onChange={(e) => setFormData({ ...formData, fuelType: e.target.value as any })}
+                  onChange={(e) => setFormData({ ...formData, fuelType: e.target.value as Vehicle['fuelType'] })}
                   required
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 >
@@ -241,7 +262,7 @@ export default function NewVehiclePage() {
                 </label>
                 <select
                   value={formData.transmission}
-                  onChange={(e) => setFormData({ ...formData, transmission: e.target.value as any })}
+                  onChange={(e) => setFormData({ ...formData, transmission: e.target.value as Vehicle['transmission'] })}
                   required
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 >
@@ -256,7 +277,7 @@ export default function NewVehiclePage() {
                 </label>
                 <select
                   value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value as Vehicle['status'] })}
                   required
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 >

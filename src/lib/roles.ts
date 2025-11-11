@@ -1,6 +1,6 @@
 // Definición de roles y permisos del sistema
 
-export type UserRole = 'admin' | 'employee' | 'viewer';
+export type UserRole = 'admin' | 'emprendedores' | 'usuarios_regulares';
 
 export interface RolePermissions {
   // Gestión de usuarios
@@ -53,7 +53,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canManageSettings: true,
   },
   
-  employee: {
+  emprendedores: {
     // Usuarios
     canManageUsers: false,
     canViewUsers: false,
@@ -78,7 +78,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canManageSettings: false,
   },
   
-  viewer: {
+  usuarios_regulares: {
     // Usuarios
     canManageUsers: false,
     canViewUsers: false,
@@ -111,8 +111,8 @@ export function hasPermission(role: UserRole, permission: keyof RolePermissions)
 export function getRoleLabel(role: UserRole): string {
   const labels: Record<UserRole, string> = {
     admin: 'Administrador',
-    employee: 'Empleado',
-    viewer: 'Visualizador',
+    emprendedores: 'Emprendedor',
+    usuarios_regulares: 'Usuario Regular',
   };
   return labels[role] || role;
 }
@@ -120,8 +120,8 @@ export function getRoleLabel(role: UserRole): string {
 export function getRoleDescription(role: UserRole): string {
   const descriptions: Record<UserRole, string> = {
     admin: 'Acceso completo al sistema. Puede gestionar usuarios, vehículos, ventas y configuración.',
-    employee: 'Puede crear y editar vehículos, registrar ventas y ver reportes básicos.',
-    viewer: 'Solo lectura. Puede ver inventario y estadísticas básicas.',
+    emprendedores: 'Puede crear y editar vehículos, registrar ventas y ver reportes básicos. Ideal para vendedores y emprendedores.',
+    usuarios_regulares: 'Solo lectura. Puede ver inventario y estadísticas básicas. Para usuarios que solo consultan información.',
   };
   return descriptions[role] || '';
 }
