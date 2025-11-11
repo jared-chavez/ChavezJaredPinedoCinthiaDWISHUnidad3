@@ -1,0 +1,73 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      String   @default("employee") // admin, employee, viewer
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vehicles Vehicle[]
+  sales    Sale[]
+
+  @@map("users")
+}
+
+model Vehicle {
+  id          String   @id @default(cuid())
+  brand       String
+  model       String
+  year        Int
+  color       String
+  price       Float
+  mileage     Int
+  fuelType    String   // gasoline, diesel, electric, hybrid
+  transmission String  // manual, automatic
+  status      String   @default("available") // available, sold, reserved, maintenance
+  vin         String   @unique
+  description String?
+  images      String[] @default([])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String
+
+  creator User   @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  sales   Sale[]
+
+  @@map("vehicles")
+  @@index([status])
+  @@index([createdBy])
+}
+
+model Sale {
+  id            String   @id @default(cuid())
+  vehicleId     String
+  userId        String
+  customerName  String
+  customerEmail String
+  customerPhone String
+  salePrice     Float
+  saleDate      DateTime @default(now())
+  paymentMethod String   // cash, credit, financing
+  notes         String?
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sales")
+  @@index([vehicleId])
+  @@index([userId])
+  @@index([saleDate])
+}
