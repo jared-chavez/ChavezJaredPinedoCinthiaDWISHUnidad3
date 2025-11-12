@@ -145,7 +145,7 @@ export default function NewVehiclePage() {
       <Navbar />
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 logo-title">
             Agregar Nuevo Vehículo
           </h1>
 
@@ -227,8 +227,12 @@ export default function NewVehiclePage() {
                 </label>
                 <input
                   type="number"
-                  value={formData.year}
-                  onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
+                  value={isNaN(formData.year) ? '' : formData.year}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    const numValue = value === '' ? new Date().getFullYear() : parseInt(value, 10);
+                    setFormData({ ...formData, year: isNaN(numValue) ? new Date().getFullYear() : numValue });
+                  }}
                   required
                   min="1900"
                   max={new Date().getFullYear() + 1}
@@ -255,8 +259,12 @@ export default function NewVehiclePage() {
                 </label>
                 <input
                   type="number"
-                  value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
+                  value={isNaN(formData.price) ? '' : formData.price}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    const numValue = value === '' ? 0 : parseFloat(value);
+                    setFormData({ ...formData, price: isNaN(numValue) ? 0 : numValue });
+                  }}
                   required
                   min="0"
                   step="0.01"
@@ -270,8 +278,12 @@ export default function NewVehiclePage() {
                 </label>
                 <input
                   type="number"
-                  value={formData.mileage}
-                  onChange={(e) => setFormData({ ...formData, mileage: parseInt(e.target.value) })}
+                  value={isNaN(formData.mileage) ? '' : formData.mileage}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    const numValue = value === '' ? 0 : parseInt(value, 10);
+                    setFormData({ ...formData, mileage: isNaN(numValue) ? 0 : numValue });
+                  }}
                   required
                   min="0"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"

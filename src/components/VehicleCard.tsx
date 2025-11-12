@@ -2,6 +2,7 @@
 
 import { Vehicle } from '@/types';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface VehicleCardProps {
   vehicle: Vehicle;
@@ -22,16 +23,46 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
     maintenance: 'Mantenimiento',
   };
 
+  // Obtener la primera imagen disponible
+  const firstImage = vehicle.images && vehicle.images.length > 0 ? vehicle.images[0] : null;
+
   return (
     <Link href={`/inventory/${vehicle.id}`}>
       <div className="group bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700 overflow-hidden cursor-pointer hover:-translate-y-1">
-        {/* Image placeholder with gradient */}
+        {/* Imagen del vehículo o placeholder */}
         <div className="h-48 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-700 dark:to-gray-800 relative overflow-hidden">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <svg className="w-24 h-24 text-blue-200 dark:text-gray-600 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-            </svg>
-          </div>
+          {firstImage ? (
+            // Usar img normal para imágenes BLOB desde API routes
+            firstImage.startsWith('/api/') ? (
+              <img
+                src={firstImage}
+                alt={`${vehicle.brand} ${vehicle.model}`}
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                onError={(e) => {
+                  // Si la imagen falla al cargar, mostrar placeholder
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const placeholder = target.parentElement?.querySelector('.image-placeholder') as HTMLElement;
+                  if (placeholder) placeholder.style.display = 'flex';
+                }}
+              />
+            ) : (
+              <Image
+                src={firstImage}
+                alt={`${vehicle.brand} ${vehicle.model}`}
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-300"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                unoptimized={firstImage.startsWith('http')}
+              />
+            )
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center image-placeholder">
+              <svg className="w-24 h-24 text-blue-200 dark:text-gray-600 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+              </svg>
+            </div>
+          )}
           <div className="absolute top-3 right-3">
             <span className={`px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm ${statusColors[vehicle.status]}`}>
               {statusLabels[vehicle.status]}

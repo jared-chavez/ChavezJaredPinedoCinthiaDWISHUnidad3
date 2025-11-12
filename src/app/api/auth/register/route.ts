@@ -84,14 +84,30 @@ export async function POST(request: NextRequest) {
 
     if (!emailResult.success) {
       console.error('Error sending verification email:', emailResult.error);
+      
+      // Si es un error de límite de cuenta trial, informar al usuario
+      const isTrialLimitError = emailResult.error?.includes('Trial accounts') || 
+                                 emailResult.error?.includes('MS42225') ||
+                                 emailResult.error?.includes("can only send emails to the administrator's email");
+      
+      if (isTrialLimitError) {
+        // El registro se completa, pero el email no se puede enviar
+        // En producción, podrías querer notificar al administrador o usar otro método
+        console.warn('⚠️  Registro completado, pero email no enviado debido a límite de cuenta trial de MailerSend');
+        console.warn('⚠️  El usuario puede verificar manualmente usando el token en la base de datos');
+      }
       // No fallar el registro si el email falla, pero loguear el error
     }
 
     // 11. Retornar éxito (sin exponer información sensible)
+    // Nota: Siempre retornamos éxito porque el usuario fue creado
+    // El email puede fallar por límites de la cuenta trial, pero el registro es válido
     return NextResponse.json(
       {
         message: 'Registro exitoso. Por favor verifica tu email para activar tu cuenta.',
         email: validated.email,
+        // Si el email falló, no exponer el error al cliente por seguridad
+        // El usuario puede verificar manualmente si es necesario
       },
       { status: 201 }
     );

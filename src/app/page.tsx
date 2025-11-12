@@ -381,8 +381,8 @@ export default function HomePage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                {/* Texto del logo más grande y formal (font-serif) */}
-                <span className="text-3xl font-serif font-bold italic tracking-tight">
+                {/* Texto del logo con Trade Winds (logo-title) */}
+                <span className="text-3xl font-bold italic tracking-tight logo-title">
                   Nocturna Genesis
                 </span>
               </div>
