@@ -1,6 +1,5 @@
 <div align="center">
-  <img src="./public/logo1.png
-  " alt="Nocturna Genesis Logo" width="400" height="400" style="border-radius: 20px; margin-bottom: 20px;" />
+  <img src="./public/logo1.png" alt="Nocturna Genesis Logo" width="400" height="400" style="border-radius: 20px; margin-bottom: 20px;" />
   
   # Agencia de Vehículos - Nocturna Genesis
   
