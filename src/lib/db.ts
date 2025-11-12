@@ -424,7 +424,7 @@ export const saleDB = {
     };
   },
   
-  async create(sale: Omit<Sale, 'id' | 'saleDate'>): Promise<Sale> {
+  async create(sale: Omit<Sale, 'id' | 'saleDate'> & { saleDate?: Date }): Promise<Sale> {
       const newSale = await prisma.sale.create({
       data: {
         invoiceNumber: sale.invoiceNumber,
@@ -439,6 +439,7 @@ export const saleDB = {
         paymentMethod: sale.paymentMethod,
         status: sale.status || 'completed',
         notes: sale.notes,
+        saleDate: sale.saleDate || new Date(), // Usar fecha proporcionada o fecha actual
       } as any,
     });
     return {

@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
       userId: session.user.id, // ID del cliente que realiza la compra
       customerName: validated.customerName,
       customerEmail: validated.customerEmail,
-      customerPhone: validated.customerPhone || 'No proporcionado', // Campo informativo (opcional)
+      customerPhone: validated.customerPhone || 'N/A', // Campo informativo (opcional)
       salePrice: validated.salePrice,
       taxAmount,
       totalAmount,

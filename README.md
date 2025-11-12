@@ -50,6 +50,7 @@
 - **Axios** - Cliente HTTP para APIs
 - **Recharts** - Gráficos y visualizaciones
 - **MailerSend** - Servicio de email para verificación
+- **xlsx** - Procesamiento de archivos Excel para importación de ventas
 - **Jest** - Framework de testing
 - **React Testing Library** - Testing de componentes React
 
@@ -218,6 +219,8 @@ Abre [http://localhost:3000](http://localhost:3000)
 - `POST /api/sales` - Registrar venta (Admin/Emprendedores)
 - `PUT /api/sales/[id]` - Actualizar venta (Admin)
 - `DELETE /api/sales/[id]` - Eliminar venta (Admin)
+- `POST /api/sales/import` - Importar ventas desde archivo Excel (Admin/Emprendedores)
+- `GET /api/sales/my-purchases` - Obtener compras del usuario actual (Usuarios Regulares)
 
 ### Estadísticas
 - `GET /api/stats/dashboard` - Estadísticas del dashboard
@@ -330,6 +333,9 @@ src/
 - CRUD completo de vehículos
 - CRUD completo de usuarios (crear, leer, actualizar, eliminar, cambio de rol)
 - CRUD completo de ventas
+- **Importación de ventas desde Excel** (con validación y manejo de campos opcionales)
+- Sistema de facturación (invoiceNumber, taxAmount, totalAmount, status)
+- Checkout de compra para clientes (simulado PayPal)
 - Registro con verificación de email (MailerSend)
 - Validación de IP y rate limiting
 - Dashboard con métricas y gráficos
@@ -354,7 +360,8 @@ La aplicación está funcionalmente completa y lista para uso. Las tareas pendie
 - Autenticación y autorización
 - CRUD completo de vehículos, usuarios y ventas
 - Sistema de facturación (invoiceNumber, taxAmount, totalAmount, status)
-- Checkout de compra para clientes
+- **Importación masiva de ventas desde Excel** (con validación y manejo de campos opcionales)
+- Checkout de compra para clientes (simulado PayPal)
 - Dashboard con métricas
 - Búsqueda, filtros y paginación
 - Verificación de email
@@ -391,7 +398,7 @@ La aplicación está funcionalmente completa y lista para uso. Las tareas pendie
 | Autorización (RBAC) | 100% | Completo |
 | Verificación de Email | 100% | Completo (MailerSend) |
 | CRUD Vehículos | 100% | Completo |
-| CRUD Ventas | 100% | Completo |
+| CRUD Ventas | 100% | Completo (incluye importación Excel) |
 | CRUD Usuarios | 100% | Completo |
 | Dashboard | 95% | Casi completo |
 | Búsqueda/Filtros | 100% | Completo |
@@ -593,6 +600,55 @@ APP_URL=http://localhost:3000
 9. **Connection Pooling**: Configurar pool de conexiones para Prisma
 10. **Migrations**: Configurar migraciones automáticas en producción
 
+## Importación de Ventas desde Excel
+
+### Funcionalidad
+El sistema permite importar múltiples ventas desde un archivo Excel, facilitando la carga masiva de datos históricos o registros en lote.
+
+### Características
+- **Validación automática**: Cada fila se valida con esquemas Zod antes de importar
+- **Manejo de campos opcionales**: Teléfono y Notas aceptan valores vacíos o "N/A"
+- **Fecha de venta flexible**: Soporta formatos de fecha de Excel (serial, YYYY-MM-DD, DD/MM/YYYY)
+- **Búsqueda por VIN**: Encuentra automáticamente el vehículo correspondiente
+- **Cálculo automático**: Genera invoiceNumber, calcula taxAmount (16% IVA) y totalAmount
+- **Reporte detallado**: Muestra éxito y errores por fila después de la importación
+- **Actualización de estado**: Marca automáticamente los vehículos como "sold" después de la venta
+
+### Formato del Excel
+
+| Columna | Requerido | Ejemplo | Descripción |
+|---------|-----------|---------|-------------|
+| **VIN** | ✅ | `1HGBH41JXMN109186` | VIN del vehículo (debe existir en BD) |
+| **Nombre Cliente** | ✅ | `Juan Pérez` | Nombre completo del cliente |
+| **Email Cliente** | ✅ | `juan@email.com` | Email válido del cliente |
+| **Teléfono Cliente** | ❌ | `5551234567` o `N/A` o vacío | Teléfono (opcional, se guarda como "N/A" si está vacío) |
+| **Precio Venta** | ✅ | `700000` | Precio de venta (sin impuestos) |
+| **Método Pago** | ✅ | `credit/cash/financing` | Método de pago (default: `credit`) |
+| **Estado** | ❌ | `completed/pending/cancelled/refunded` | Estado de la venta (default: `completed`) |
+| **Fecha Venta** | ❌ | `2025-11-12` o vacío | Fecha de venta (default: fecha actual) |
+| **Notas** | ❌ | `Venta especial` o `N/A` o vacío | Notas adicionales (opcional) |
+
+### Uso
+1. Ir a la página de **Ventas** (`/sales`)
+2. Click en **"Plantilla"** para descargar el archivo Excel de ejemplo
+3. Llenar el archivo con los datos de ventas
+4. Click en **"Importar Excel"** y seleccionar el archivo
+5. Revisar el reporte de importación (éxitos y errores)
+
+### Validaciones
+- VIN debe existir en la base de datos
+- Vehículo debe estar disponible (`available` o `reserved`)
+- Email debe tener formato válido
+- Precio debe ser un número positivo
+- Método de pago debe ser válido (`cash`, `credit`, `financing`)
+- Estado debe ser válido (`completed`, `pending`, `cancelled`, `refunded`)
+
+### Manejo de Errores
+- Si una fila tiene errores, se reporta en el modal de resultados
+- Las filas válidas se importan exitosamente
+- Las filas con errores se omiten y se muestran en el reporte
+- El sistema continúa procesando el resto del archivo aunque haya errores
+
 ## Notas
 
 - **Base de datos PostgreSQL** implementada con Prisma ORM
@@ -600,6 +656,7 @@ APP_URL=http://localhost:3000
 - **Búsqueda y filtros** implementados con paginación
 - **APIs de terceros**: NHTSA (funcional), Pricing (simulada), Weather y Currency (opcionales)
 - **Web Services propios**: API REST completa con autenticación
+- **Importación masiva**: Sistema de importación de ventas desde Excel con validación completa
 - En producción, reemplazar APIs simuladas por APIs reales con API keys
 - Usa `npm run db:studio` para visualizar y editar datos directamente
 
