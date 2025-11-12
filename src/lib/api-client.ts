@@ -3,7 +3,7 @@
 
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import { Vehicle, Sale, User } from '@/types';
-import { VehicleInput, UpdateVehicleInput, SaleInput, RegisterInput } from './validations';
+import { VehicleInput, UpdateVehicleInput, SaleInput, UpdateSaleInput, RegisterInput, UpdateUserInput } from './validations';
 
 // Tipos de respuesta de la API
 export interface ApiResponse<T> {
@@ -73,6 +73,15 @@ class ApiClient {
     return response.data;
   }
 
+  async updateUser(id: string, userData: UpdateUserInput): Promise<User> {
+    const response = await this.client.put(`/users/${id}`, userData);
+    return response.data;
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    await this.client.delete(`/users/${id}`);
+  }
+
   // ========== VEHÍCULOS ==========
   async getVehicles(status?: string): Promise<Vehicle[]> {
     const params = status ? { status } : {};
@@ -113,6 +122,15 @@ class ApiClient {
   async createSale(saleData: SaleInput): Promise<Sale> {
     const response = await this.client.post('/sales', saleData);
     return response.data;
+  }
+
+  async updateSale(id: string, saleData: UpdateSaleInput): Promise<Sale> {
+    const response = await this.client.put(`/sales/${id}`, saleData);
+    return response.data;
+  }
+
+  async deleteSale(id: string): Promise<void> {
+    await this.client.delete(`/sales/${id}`);
   }
 
   // ========== WEB SERVICES DE TERCEROS ==========
@@ -156,7 +174,7 @@ export const apiClient = new ApiClient();
 // Funciones helper para manejo de errores
 export function handleApiError(error: unknown): string {
   if (axios.isAxiosError(error)) {
-    const axiosError = error as AxiosError<ApiResponse<any>>;
+    const axiosError = error as AxiosError<ApiResponse<unknown>>;
     return axiosError.response?.data?.error || axiosError.message || 'Error desconocido';
   }
   return error instanceof Error ? error.message : 'Error desconocido';

@@ -45,16 +45,44 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
     
-    const body = await request.json();
+    // Verificar si es FormData (con imágenes) o JSON
+    const contentType = request.headers.get('content-type') || '';
+    let body: any;
+    let imageFiles: File[] = [];
+    
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await request.formData();
+      
+      // Extraer datos del vehículo
+      body = {
+        brand: formData.get('brand'),
+        model: formData.get('model'),
+        year: parseInt(formData.get('year') as string),
+        color: formData.get('color'),
+        price: parseFloat(formData.get('price') as string),
+        mileage: parseInt(formData.get('mileage') as string),
+        fuelType: formData.get('fuelType'),
+        transmission: formData.get('transmission'),
+        status: formData.get('status'),
+        vin: formData.get('vin'),
+        description: formData.get('description') || undefined,
+      };
+      
+      // Extraer imágenes
+      const images = formData.getAll('images') as File[];
+      imageFiles = images.filter(img => img instanceof File && img.size > 0);
+    } else {
+      body = await request.json();
+    }
     
     // Validar con Zod
     const validated = vehicleSchema.parse(body);
     
-    // Crear vehículo
+    // Crear vehículo con imágenes BLOB
     const vehicle = await vehicleDB.create({
       ...validated,
       createdBy: session.user.id,
-    });
+    }, imageFiles);
     
     return NextResponse.json(vehicle, { status: 201 });
   } catch (error: unknown) {

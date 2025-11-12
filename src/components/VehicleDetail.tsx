@@ -172,6 +172,21 @@ export default function VehicleDetail({ vehicle, session }: VehicleDetailProps) 
                 </div>
               )}
 
+              {/* Botón de compra para clientes */}
+              {session && session.user.role === 'usuarios_regulares' && vehicle.status === 'available' && (
+                <div className="mb-4">
+                  <button
+                    onClick={() => router.push(`/checkout/${vehicle.id}`)}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                    Comprar Ahora
+                  </button>
+                </div>
+              )}
+
               {canSell && (
                 <div className="space-y-3">
                   <button

@@ -39,14 +39,18 @@ export interface Inventory {
 
 export interface Sale {
   id: string;
+  invoiceNumber: string; // Número de factura único
   vehicleId: string;
   userId: string;
   customerName: string;
   customerEmail: string;
   customerPhone: string;
   salePrice: number;
+  taxAmount: number; // Monto de impuestos (IVA)
+  totalAmount: number; // salePrice + taxAmount
   saleDate: Date;
   paymentMethod: 'cash' | 'credit' | 'financing';
+  status: 'completed' | 'cancelled' | 'pending' | 'refunded'; // Estado de venta
   notes?: string;
 }
 

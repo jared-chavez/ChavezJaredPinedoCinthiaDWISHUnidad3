@@ -29,15 +29,16 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const response = await axios.post('/api/users', {
+      // Usar el nuevo endpoint de registro público con verificación
+      const response = await axios.post('/api/auth/register', {
         name: formData.name,
         email: formData.email,
         password: formData.password,
-        role: 'usuarios_regulares',
       });
 
       if (response.status === 201) {
-        router.push('/login?registered=true');
+        // Mostrar mensaje de éxito y redirigir
+        router.push('/login?registered=true&verify=true');
       }
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { error?: string } } };
