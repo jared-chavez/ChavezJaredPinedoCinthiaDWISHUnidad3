@@ -203,10 +203,18 @@ Si no solicitaste este registro, puedes ignorar este correo.
       const errorBody = firstError.response?.body || firstError.body || {};
       const errorMessage = errorBody?.message || firstError.message || '';
       
-      const is422Error = statusCode === 422 || 
-                         errorMessage.includes('domain must be verified') ||
-                         errorMessage.includes('from.email') ||
-                         errorMessage.includes('MS42207');
+      // Detectar diferentes tipos de errores 422
+      const isDomainError = statusCode === 422 && (
+        errorMessage.includes('domain must be verified') ||
+        errorMessage.includes('from.email') ||
+        errorMessage.includes('MS42207')
+      );
+      
+      const isTrialLimitError = statusCode === 422 && (
+        errorMessage.includes('Trial accounts') ||
+        errorMessage.includes('MS42225') ||
+        errorMessage.includes("can only send emails to the administrator's email")
+      );
       
       // Log para debugging
       if (statusCode === 422) {
@@ -214,10 +222,13 @@ Si no solicitaste este registro, puedes ignorar este correo.
           statusCode,
           message: errorMessage,
           body: errorBody,
+          isDomainError,
+          isTrialLimitError,
         });
       }
       
-      if (is422Error) {
+      // Si es error de dominio no verificado, intentar con email seguro
+      if (isDomainError) {
         console.warn('⚠️  Email configurado no verificado, reintentando con onboarding@mailersend.com');
         try {
           response = await sendEmailWithFallback(true);
@@ -227,9 +238,28 @@ Si no solicitaste este registro, puedes ignorar este correo.
             messageId: response.body?.message_id || 'sent',
           };
         } catch (retryError: any) {
-          // Si el retry también falla, usar el error del retry
-          lastError = retryError;
+          // Si el retry también falla, verificar si es el mismo error de trial
+          const retryStatusCode = retryError.response?.statusCode || retryError.response?.status || retryError.statusCode;
+          const retryBody = retryError.response?.body || retryError.body || {};
+          const retryMessage = retryBody?.message || retryError.message || '';
+          
+          if (retryStatusCode === 422 && (
+            retryMessage.includes('Trial accounts') ||
+            retryMessage.includes('MS42225')
+          )) {
+            // Es un error de límite de cuenta trial, no continuar
+            lastError = retryError;
+          } else {
+            // Otro tipo de error, usar el error del retry
+            lastError = retryError;
+          }
         }
+      }
+      
+      // Si es error de límite de cuenta trial, no intentar retry
+      if (isTrialLimitError) {
+        console.warn('⚠️  Cuenta de prueba de MailerSend: solo se pueden enviar emails al email del administrador');
+        // No intentar retry, el error es claro
       }
     }
     
@@ -253,9 +283,11 @@ Si no solicitaste este registro, puedes ignorar este correo.
       if (statusCode === 401) {
         errorMessage = 'Token de MailerSend inválido o sin permisos. Verifica MAILERSEND_API_TOKEN en .env.local';
       } else if (statusCode === 422) {
-        // Error 422: Dominio no verificado o datos inválidos
+        // Error 422: Dominio no verificado, límite de cuenta trial, o datos inválidos
         const msg = body?.message || 'Datos inválidos';
-        if (msg.includes('domain must be verified') || msg.includes('from.email')) {
+        if (msg.includes('Trial accounts') || msg.includes('MS42225') || msg.includes("can only send emails to the administrator's email")) {
+          errorMessage = `Cuenta de prueba de MailerSend: solo se pueden enviar emails al email del administrador de la cuenta. Para enviar a otros emails, necesitas actualizar tu cuenta a un plan de pago. Error: ${msg}`;
+        } else if (msg.includes('domain must be verified') || msg.includes('from.email') || msg.includes('MS42207')) {
           errorMessage = `El dominio del email remitente no está verificado. El sistema intentará usar 'onboarding@mailersend.com' automáticamente. Error: ${msg}`;
         } else {
           errorMessage = `Datos inválidos: ${msg}`;
