@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import DashboardStats from '@/components/DashboardStats';
+import PersonalDashboardStats from '@/components/PersonalDashboardStats';
 import { ROLE_PERMISSIONS } from '@/lib/roles';
 
 export default function DashboardPage() {
@@ -62,11 +63,17 @@ export default function DashboardPage() {
               Dashboard
             </h1>
             <p className="text-lg text-gray-600 dark:text-gray-400">
-              Métricas y estadísticas del sistema
+              {session.user.role === 'usuarios_regulares' 
+                ? 'Tu panel personal y estadísticas de compras'
+                : 'Métricas y estadísticas del sistema'}
             </p>
           </div>
 
-          <DashboardStats />
+          {session.user.role === 'usuarios_regulares' ? (
+            <PersonalDashboardStats />
+          ) : (
+            <DashboardStats />
+          )}
         </div>
       </div>
     </>

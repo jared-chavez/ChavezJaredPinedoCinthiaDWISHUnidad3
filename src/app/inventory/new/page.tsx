@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 import axios from 'axios';
 import Navbar from '@/components/Navbar';
 import { useToast } from '@/components/ToastProvider';
+import ImageUpload from '@/components/ImageUpload';
 import { Vehicle } from '@/types';
 
 export default function NewVehiclePage() {
@@ -16,6 +17,7 @@ export default function NewVehiclePage() {
   const [error, setError] = useState('');
   const [externalInfo, setExternalInfo] = useState<{ source: string; info?: Record<string, string> } | null>(null);
   
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [formData, setFormData] = useState<{
     brand: string;
     model: string;
@@ -28,6 +30,7 @@ export default function NewVehiclePage() {
     status: Vehicle['status'];
     vin: string;
     description: string;
+    images: string[];
   }>({
     brand: '',
     model: '',
@@ -40,6 +43,7 @@ export default function NewVehiclePage() {
     status: 'available',
     vin: '',
     description: '',
+    images: [],
   });
 
   useEffect(() => {
@@ -79,10 +83,45 @@ export default function NewVehiclePage() {
     setLoading(true);
 
     try {
-      const response = await axios.post('/api/vehicles', formData);
-      if (response.status === 201) {
-        showToast('Vehículo creado exitosamente', 'success');
-        router.push('/inventory');
+      // Si hay imágenes, usar FormData
+      if (imageFiles.length > 0) {
+        const formDataToSend = new FormData();
+        formDataToSend.append('brand', formData.brand);
+        formDataToSend.append('model', formData.model);
+        formDataToSend.append('year', formData.year.toString());
+        formDataToSend.append('color', formData.color);
+        formDataToSend.append('price', formData.price.toString());
+        formDataToSend.append('mileage', formData.mileage.toString());
+        formDataToSend.append('fuelType', formData.fuelType);
+        formDataToSend.append('transmission', formData.transmission);
+        formDataToSend.append('status', formData.status);
+        formDataToSend.append('vin', formData.vin);
+        if (formData.description) {
+          formDataToSend.append('description', formData.description);
+        }
+        
+        // Agregar imágenes
+        imageFiles.forEach((file) => {
+          formDataToSend.append('images', file);
+        });
+
+        const response = await axios.post('/api/vehicles', formDataToSend, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        
+        if (response.status === 201) {
+          showToast('Vehículo creado exitosamente', 'success');
+          router.push('/inventory');
+        }
+      } else {
+        // Sin imágenes, usar JSON normal
+        const response = await axios.post('/api/vehicles', formData);
+        if (response.status === 201) {
+          showToast('Vehículo creado exitosamente', 'success');
+          router.push('/inventory');
+        }
       }
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { error?: string; details?: unknown } } };
@@ -314,6 +353,15 @@ export default function NewVehiclePage() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               />
             </div>
+
+            {/* Componente de subida de imágenes */}
+            <ImageUpload
+              images={formData.images}
+              onChange={(images) => setFormData({ ...formData, images })}
+              onFilesChange={(files) => setImageFiles(files)}
+              maxImages={5}
+              maxSizeMB={5}
+            />
 
             <div className="flex gap-4">
               <button

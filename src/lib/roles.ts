@@ -87,15 +87,15 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canCreateVehicles: false,
     canEditVehicles: false,
     canDeleteVehicles: false,
-    canViewVehicles: true,
+    canViewVehicles: true,  // Puede ver catálogo completo
     
     // Ventas
     canCreateSales: false,
-    canViewSales: true,
+    canViewSales: true,      // Solo puede ver sus propias compras (filtrado por email)
     canEditSales: false,
     
     // Dashboard
-    canViewDashboard: true,
+    canViewDashboard: true,  // Dashboard personalizado con sus estadísticas
     canViewReports: false,
     canViewAnalytics: false,
     
@@ -121,7 +121,7 @@ export function getRoleDescription(role: UserRole): string {
   const descriptions: Record<UserRole, string> = {
     admin: 'Acceso completo al sistema. Puede gestionar usuarios, vehículos, ventas y configuración.',
     emprendedores: 'Puede crear y editar vehículos, registrar ventas y ver reportes básicos. Ideal para vendedores y emprendedores.',
-    usuarios_regulares: 'Solo lectura. Puede ver inventario y estadísticas básicas. Para usuarios que solo consultan información.',
+    usuarios_regulares: 'Cliente final. Puede ver catálogo de vehículos, sus propias compras y estadísticas personales. Ideal para clientes que compran vehículos.',
   };
   return descriptions[role] || '';
 }

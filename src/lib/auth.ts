@@ -3,6 +3,7 @@
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { userDB } from './db';
+import { prisma } from './prisma';
 import bcrypt from 'bcryptjs';
 import { loginSchema } from './validations';
 
@@ -28,6 +29,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           const isValid = await bcrypt.compare(validated.password, user.password);
           if (!isValid) {
             return null;
+          }
+          
+          // Verificar que el usuario tenga la cuenta activa y verificada
+          const fullUser = await prisma.user.findUnique({
+            where: { email: validated.email },
+          });
+          
+          if (!fullUser) {
+            return null;
+          }
+          
+          if (fullUser.status !== 'active' || !fullUser.emailVerified) {
+            throw new Error('Tu cuenta no está verificada. Por favor verifica tu email antes de iniciar sesión.');
           }
           
           // Retornar usuario (sin la contraseña)

@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { saleDB, vehicleDB } from '@/lib/db';
 import { saleSchema } from '@/lib/validations';
+import { generateInvoiceNumber, calculateTax, calculateTotal } from '@/lib/invoice-utils';
 
 // GET - Obtener todas las ventas
 export async function GET() {
@@ -58,10 +59,27 @@ export async function POST(request: NextRequest) {
       );
     }
     
+    // Calcular impuestos y total
+    const taxAmount = validated.taxAmount ?? calculateTax(validated.salePrice);
+    const totalAmount = validated.totalAmount ?? calculateTotal(validated.salePrice, taxAmount);
+    
+    // Generar número de factura único
+    const invoiceNumber = generateInvoiceNumber();
+    
     // Crear venta
     const sale = await saleDB.create({
-      ...validated,
+      invoiceNumber,
+      vehicleId: validated.vehicleId,
       userId: session.user.id,
+      customerName: validated.customerName,
+      customerEmail: validated.customerEmail,
+      customerPhone: validated.customerPhone || 'No proporcionado', // Campo informativo (opcional)
+      salePrice: validated.salePrice,
+      taxAmount,
+      totalAmount,
+      paymentMethod: validated.paymentMethod,
+      status: validated.status || 'completed',
+      notes: validated.notes,
     });
     
     // Actualizar estado del vehículo a "sold"

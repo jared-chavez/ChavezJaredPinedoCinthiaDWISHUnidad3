@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -28,11 +28,7 @@ function InputField({ id, label, type, value, onChange, icon: Icon, placeholder 
           onChange={onChange}
           required
           placeholder={placeholder}
-          className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl
-                     focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
-                     dark:focus:ring-indigo-400 dark:focus:border-indigo-400
-                     dark:bg-gray-800 dark:text-white bg-gray-50
-                     transition-all duration-200"
+          className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:focus:ring-indigo-400 dark:focus:border-indigo-400 dark:bg-gray-800 dark:text-white bg-gray-50 transition-all duration-200"
         />
       </div>
     </div>
@@ -43,11 +39,24 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
+  const registered = searchParams.get('registered');
+  const verify = searchParams.get('verify');
+  const verified = searchParams.get('verified');
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (registered === 'true' && verify === 'true') {
+      setSuccess('Registro exitoso. Por favor verifica tu email antes de iniciar sesión.');
+    }
+    if (verified === 'true') {
+      setSuccess('Email verificado exitosamente. Ya puedes iniciar sesión.');
+    }
+  }, [registered, verify, verified]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,12 +70,17 @@ function LoginForm() {
         redirect: false,
       });
 
-      if (result?.error) {
-        setError('Credenciales inválidas');
-      } else {
-        router.push(callbackUrl);
-        router.refresh();
-      }
+              if (result?.error) {
+                // Manejar error de cuenta no verificada
+                if (result.error.includes('verificada')) {
+                  setError('Tu cuenta no está verificada. Por favor verifica tu email antes de iniciar sesión.');
+                } else {
+                  setError('Credenciales inválidas');
+                }
+              } else {
+                router.push(callbackUrl);
+                router.refresh();
+              }
     } catch {
       setError('Error al iniciar sesión');
     } finally {
@@ -125,6 +139,11 @@ function LoginForm() {
                   Inicia sesión en tu cuenta
                 </p>
 
+                {success && (
+                  <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 rounded-xl text-center">
+                    {success}
+                  </div>
+                )}
                 {error && (
                   <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl text-center">
                     {error}

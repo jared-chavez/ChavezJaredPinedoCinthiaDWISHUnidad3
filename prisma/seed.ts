@@ -10,30 +10,34 @@ async function main() {
 
   // Crear usuario administrador
   const adminPassword = await bcrypt.hash('Admin123!', 10);
-  const admin = await prisma.user.upsert({
-    where: { email: 'admin@agencia.com' },
-    update: {},
-    create: {
-      email: 'admin@agencia.com',
-      name: 'Administrador',
-      password: adminPassword,
-      role: 'admin',
-    },
-  });
+          const admin = await prisma.user.upsert({
+            where: { email: 'admin@agencia.com' },
+            update: {},
+            create: {
+              email: 'admin@agencia.com',
+              name: 'Administrador',
+              password: adminPassword,
+              role: 'admin',
+              status: 'active',
+              emailVerified: true,
+            },
+          });
   console.log('✅ Usuario administrador creado:', admin.email);
 
   // Crear usuario emprendedor de ejemplo
   const emprendedorPassword = await bcrypt.hash('Emprendedor123!', 10);
-  const emprendedor = await prisma.user.upsert({
-    where: { email: 'emprendedor@agencia.com' },
-    update: {},
-    create: {
-      email: 'emprendedor@agencia.com',
-      name: 'Emprendedor Ejemplo',
-      password: emprendedorPassword,
-      role: 'emprendedores',
-    },
-  });
+          const emprendedor = await prisma.user.upsert({
+            where: { email: 'emprendedor@agencia.com' },
+            update: {},
+            create: {
+              email: 'emprendedor@agencia.com',
+              name: 'Emprendedor Ejemplo',
+              password: emprendedorPassword,
+              role: 'emprendedores',
+              status: 'active',
+              emailVerified: true,
+            },
+          });
   console.log('✅ Usuario emprendedor creado:', emprendedor.email);
 
   // Crear algunos vehículos de ejemplo
