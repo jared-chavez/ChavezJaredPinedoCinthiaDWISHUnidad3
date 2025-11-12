@@ -41,7 +41,7 @@ export default function Navbar() {
                     >
                       <div className="w-8 h-8 rounded-lg overflow-hidden shadow-lg shadow-blue-500/20 flex-shrink-0">
                         <Image
-                          src="/images.jpeg"
+                          src="/logo1.png"
                           alt="Nocturna Genesis Logo"
                           width={32}
                           height={32}

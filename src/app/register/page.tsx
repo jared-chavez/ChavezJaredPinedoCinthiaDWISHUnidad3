@@ -87,7 +87,7 @@ export default function RegisterPage() {
                 <div className="flex justify-center mb-6">
                   <div className="relative w-20 h-20 rounded-full overflow-hidden shadow-lg ring-4 ring-gray-200 dark:ring-gray-700">
                     <Image
-                      src="/images.jpeg"
+                      src="/logo1.png"
                       alt="Logo"
                       fill
                       className="object-cover"
