@@ -41,6 +41,8 @@ export async function middleware(request: NextRequest) {
   const protectedRoutes = [
     '/dashboard',
     '/sales',
+    '/my-purchases',        // Compras del cliente
+    '/checkout',            // Checkout de compra
     '/users',
     '/inventory/new',       // Crear vehículo requiere auth
   ];

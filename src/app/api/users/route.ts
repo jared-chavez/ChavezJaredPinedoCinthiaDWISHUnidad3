@@ -14,11 +14,22 @@ export async function GET() {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
     
-    const users = await userDB.getAll();
-    // No retornar contraseñas
-    const usersWithoutPasswords = users.map(({ password: _password, ...user }) => user);
+    // Obtener usuarios completos con status desde Prisma
+    const { prisma } = await import('@/lib/prisma');
+    const fullUsers = await prisma.user.findMany({
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        status: true,
+        emailVerified: true,
+        createdAt: true,
+      } as any,
+    });
     
-    return NextResponse.json(usersWithoutPasswords);
+    return NextResponse.json(fullUsers);
   } catch (error) {
     console.error('Error al obtener usuarios:', error);
     return NextResponse.json(

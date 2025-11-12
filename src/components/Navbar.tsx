@@ -41,7 +41,7 @@ export default function Navbar() {
                     >
                       <div className="w-8 h-8 rounded-lg overflow-hidden shadow-lg shadow-blue-500/20 flex-shrink-0">
                         <Image
-                          src="/images.jpeg"
+                          src="/logo1.png"
                           alt="Nocturna Genesis Logo"
                           width={32}
                           height={32}
@@ -69,7 +69,15 @@ export default function Navbar() {
                   Inventario
                 </Link>
               )}
-              {permissions.canViewSales && (
+              {permissions.canViewSales && session.user.role === 'usuarios_regulares' && (
+                <Link
+                  href="/my-purchases"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                >
+                  Mis Compras
+                </Link>
+              )}
+              {permissions.canViewSales && session.user.role !== 'usuarios_regulares' && (
                 <Link
                   href="/sales"
                   className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"

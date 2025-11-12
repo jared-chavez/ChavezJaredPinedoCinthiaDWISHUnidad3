@@ -29,15 +29,16 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const response = await axios.post('/api/users', {
+      // Usar el nuevo endpoint de registro público con verificación
+      const response = await axios.post('/api/auth/register', {
         name: formData.name,
         email: formData.email,
         password: formData.password,
-        role: 'usuarios_regulares',
       });
 
       if (response.status === 201) {
-        router.push('/login?registered=true');
+        // Mostrar mensaje de éxito y redirigir
+        router.push('/login?registered=true&verify=true');
       }
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { error?: string } } };
@@ -87,7 +88,7 @@ export default function RegisterPage() {
                 <div className="flex justify-center mb-6">
                   <div className="relative w-20 h-20 rounded-full overflow-hidden shadow-lg ring-4 ring-gray-200 dark:ring-gray-700">
                     <Image
-                      src="/images.jpeg"
+                      src="/logo1.png"
                       alt="Logo"
                       fill
                       className="object-cover"

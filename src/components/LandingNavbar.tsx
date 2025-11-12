@@ -21,20 +21,23 @@ export default function LandingNavbar() {
   return (
     <nav className="bg-white dark:bg-gray-900 shadow-lg sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
+        {/* La altura del nav se mantiene en h-24 para dar espacio al logo más grande */}
+        <div className="flex justify-between items-center h-24"> 
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-3">
-            <div className="w-12 h-12 rounded-lg overflow-hidden shadow-lg shadow-blue-500/20 flex-shrink-0">
+          <Link href="/" className="flex items-center space-x-4">
+            {/* Ícono de logo más grande: w-16 h-16 (antes w-14 h-14) */}
+            <div className="w-16 h-16 rounded-lg overflow-hidden shadow-xl shadow-blue-500/30 flex-shrink-0 transition-all duration-300 hover:scale-105"> 
               <Image
-                src="/images.jpeg"
+                src="/logo1.png"
                 alt="Nocturna Genesis Logo"
-                width={48}
-                height={48}
+                width={64} // Ajustado a 64 (w-16)
+                height={64} // Ajustado a 64 (h-16)
                 className="w-full h-full object-cover"
               />
             </div>
             <div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent logo-title">
+              {/* Texto del logo con tipografía más grande (text-3xl) y NORMAL (sans-serif) y formal (font-bold) */}
+              <span className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white transition-colors duration-300">
                 Nocturna Genesis
               </span>
               <p className="text-xs text-gray-500 dark:text-gray-400">Agencia de Vehículos</p>
@@ -49,7 +52,7 @@ export default function LandingNavbar() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                  className="px-4 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
                 >
                   {item.name}
                 </Link>
@@ -168,4 +171,3 @@ export default function LandingNavbar() {
     </nav>
   );
 }
-
