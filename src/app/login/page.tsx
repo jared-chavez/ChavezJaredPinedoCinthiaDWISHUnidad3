@@ -5,32 +5,99 @@ import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { User, Lock, Loader2 } from 'lucide-react';
+import { User, Lock, Loader2, AlertCircle } from 'lucide-react';
 
-// 🔹 Componente reutilizable para inputs
-function InputField({ id, label, type, value, onChange, icon: Icon, placeholder }: any) {
+// Validaciones JavaScript
+const validateEmail = (email: string): string | null => {
+  if (!email) {
+    return 'El email es requerido';
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return 'Email inválido';
+  }
+  return null;
+};
+
+const validatePassword = (password: string): string | null => {
+  if (!password) {
+    return 'La contraseña es requerida';
+  }
+  if (password.length < 1) {
+    return 'La contraseña es requerida';
+  }
+  return null;
+};
+
+// 🔹 Componente reutilizable para inputs con validación
+function InputField({ 
+  id, 
+  label, 
+  type, 
+  value, 
+  onChange, 
+  onBlur,
+  icon: Icon, 
+  placeholder,
+  error,
+  touched
+}: {
+  id: string;
+  label: string;
+  type: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: () => void;
+  icon: React.ComponentType<{ className?: string }>;
+  placeholder: string;
+  error?: string | null;
+  touched?: boolean;
+}) {
+  const hasError = touched && error;
+  
   return (
     <div>
       <label
         htmlFor={id}
-        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        className={`block text-sm font-medium mb-2 ${
+          hasError 
+            ? 'text-red-700 dark:text-red-400' 
+            : 'text-gray-700 dark:text-gray-300'
+        }`}
       >
         {label}
       </label>
       <div className="relative">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Icon className="h-5 w-5 text-gray-400" />
+        <div className={`absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none ${
+          hasError ? 'text-red-500' : 'text-gray-400'
+        }`}>
+          <Icon className="h-5 w-5" />
         </div>
         <input
           id={id}
           type={type}
           value={value}
           onChange={onChange}
-          required
+          onBlur={onBlur}
           placeholder={placeholder}
-          className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:focus:ring-indigo-400 dark:focus:border-indigo-400 dark:bg-gray-800 dark:text-white bg-gray-50 transition-all duration-200"
+          className={`w-full pl-10 pr-4 py-3 border rounded-xl transition-all duration-200 ${
+            hasError
+              ? 'border-red-500 dark:border-red-500 focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-red-50 dark:bg-red-900/20'
+              : 'border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:focus:ring-indigo-400 dark:focus:border-indigo-400 bg-gray-50 dark:bg-gray-800'
+          } dark:text-white`}
         />
+        {hasError && (
+          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+            <AlertCircle className="h-5 w-5 text-red-500" />
+          </div>
+        )}
       </div>
+      {hasError && (
+        <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
+          <AlertCircle className="h-4 w-4" />
+          {error}
+        </p>
+      )}
     </div>
   );
 }
@@ -48,6 +115,22 @@ function LoginForm() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  // Estados para validación de campos
+  const [errors, setErrors] = useState<{
+    email: string | null;
+    password: string | null;
+  }>({
+    email: null,
+    password: null,
+  });
+  const [touched, setTouched] = useState<{
+    email: boolean;
+    password: boolean;
+  }>({
+    email: false,
+    password: false,
+  });
 
   useEffect(() => {
     if (registered === 'true' && verify === 'true') {
@@ -58,9 +141,59 @@ function LoginForm() {
     }
   }, [registered, verify, verified]);
 
+  // Validar campos individuales
+  const validateField = (name: 'email' | 'password', value: string) => {
+    let fieldError: string | null = null;
+    
+    if (name === 'email') {
+      fieldError = validateEmail(value);
+    } else if (name === 'password') {
+      fieldError = validatePassword(value);
+    }
+    
+    setErrors(prev => ({ ...prev, [name]: fieldError }));
+    return fieldError === null;
+  };
+
+  // Manejar cambios en campos
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setEmail(value);
+    if (touched.email) {
+      validateField('email', value);
+    }
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setPassword(value);
+    if (touched.password) {
+      validateField('password', value);
+    }
+  };
+
+  // Manejar blur (cuando el usuario sale del campo)
+  const handleBlur = (field: 'email' | 'password') => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+    validateField(field, field === 'email' ? email : password);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    
+    // Marcar todos los campos como touched
+    setTouched({ email: true, password: true });
+    
+    // Validar todos los campos
+    const isEmailValid = validateField('email', email);
+    const isPasswordValid = validateField('password', password);
+    
+    // Si hay errores de validación, no continuar
+    if (!isEmailValid || !isPasswordValid) {
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -70,17 +203,17 @@ function LoginForm() {
         redirect: false,
       });
 
-              if (result?.error) {
-                // Manejar error de cuenta no verificada
-                if (result.error.includes('verificada')) {
-                  setError('Tu cuenta no está verificada. Por favor verifica tu email antes de iniciar sesión.');
-                } else {
-                  setError('Credenciales inválidas');
-                }
-              } else {
-                router.push(callbackUrl);
-                router.refresh();
-              }
+      if (result?.error) {
+        // Manejar error de cuenta no verificada
+        if (result.error.includes('verificada')) {
+          setError('Tu cuenta no está verificada. Por favor verifica tu email antes de iniciar sesión.');
+        } else {
+          setError('Credenciales inválidas');
+        }
+      } else {
+        router.push(callbackUrl);
+        router.refresh();
+      }
     } catch {
       setError('Error al iniciar sesión');
     } finally {
@@ -106,7 +239,7 @@ function LoginForm() {
               <div className="absolute inset-0 bg-gradient-to-br from-gray-900/80 via-gray-800/70 to-gray-900/80"></div>
               
               <div className="relative z-10 flex flex-col items-center justify-center p-8 w-full text-center">
-                <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg">
+                <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg logo-title">
                   Nocturna Genesis
                 </h2>
                 <p className="text-gray-200 text-xl md:text-2xl drop-shadow-md">
@@ -132,7 +265,7 @@ function LoginForm() {
                 </div>
 
                 {/* Título */}
-                <h1 className="text-4xl font-bold text-center mb-2 text-gray-900 dark:text-white">
+                <h1 className="text-4xl font-bold text-center mb-2 text-gray-900 dark:text-white logo-title">
                   BIENVENIDO
                 </h1>
                 <p className="text-center text-gray-600 dark:text-gray-400 mb-8">
@@ -150,15 +283,18 @@ function LoginForm() {
                   </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-6" noValidate>
                   <InputField
                     id="email"
                     label="Correo"
                     type="email"
                     value={email}
-                    onChange={(e: any) => setEmail(e.target.value)}
+                    onChange={handleEmailChange}
+                    onBlur={() => handleBlur('email')}
                     icon={User}
                     placeholder="admin@agencia.com"
+                    error={errors.email}
+                    touched={touched.email}
                   />
 
                   <InputField
@@ -166,9 +302,12 @@ function LoginForm() {
                     label="Contraseña"
                     type="password"
                     value={password}
-                    onChange={(e: any) => setPassword(e.target.value)}
+                    onChange={handlePasswordChange}
+                    onBlur={() => handleBlur('password')}
                     icon={Lock}
                     placeholder="••••••••"
+                    error={errors.password}
+                    touched={touched.password}
                   />
 
                   <button

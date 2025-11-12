@@ -19,9 +19,9 @@ export default function PayPalCheckout({
   processing,
 }: PayPalCheckoutProps) {
   const [paymentMethod, setPaymentMethod] = useState<'credit' | 'paypal'>('credit');
-  const [cardNumber, setCardNumber] = useState('1234 5678 9012 3456');
-  const [expiryDate, setExpiryDate] = useState('MM/YY');
-  const [cvv, setCvv] = useState('123');
+  const [cardNumber, setCardNumber] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
+  const [cvv, setCvv] = useState('');
   const [notes, setNotes] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -36,20 +36,38 @@ export default function PayPalCheckout({
     const newErrors: Record<string, string> = {};
 
     if (paymentMethod === 'credit') {
-      // Validar número de tarjeta (simplificado)
+      // Validar número de tarjeta
       const cleanCardNumber = cardNumber.replace(/\s/g, '');
-      if (cleanCardNumber.length < 13 || cleanCardNumber.length > 19) {
+      if (!cleanCardNumber || cleanCardNumber.trim() === '') {
+        newErrors.cardNumber = 'El número de tarjeta es requerido';
+      } else if (cleanCardNumber.length < 13 || cleanCardNumber.length > 19) {
         newErrors.cardNumber = 'El número de tarjeta debe tener entre 13 y 19 dígitos';
+      } else if (!/^\d+$/.test(cleanCardNumber)) {
+        newErrors.cardNumber = 'El número de tarjeta solo puede contener dígitos';
       }
 
       // Validar fecha de vencimiento
-      if (expiryDate === 'MM/YY' || !/^\d{2}\/\d{2}$/.test(expiryDate)) {
-        newErrors.expiryDate = 'Fecha de vencimiento inválida';
+      if (!expiryDate || expiryDate.trim() === '') {
+        newErrors.expiryDate = 'La fecha de vencimiento es requerida';
+      } else if (!/^\d{2}\/\d{2}$/.test(expiryDate)) {
+        newErrors.expiryDate = 'Formato inválido. Use MM/YY (ej: 12/25)';
+      } else {
+        // Validar que el mes sea válido (01-12)
+        const [month, year] = expiryDate.split('/');
+        const monthNum = parseInt(month, 10);
+        const yearNum = parseInt(year, 10);
+        if (monthNum < 1 || monthNum > 12) {
+          newErrors.expiryDate = 'El mes debe estar entre 01 y 12';
+        } else if (yearNum < 0 || yearNum > 99) {
+          newErrors.expiryDate = 'Año inválido';
+        }
       }
 
       // Validar CVV
-      if (!/^\d{3,4}$/.test(cvv)) {
-        newErrors.cvv = 'CVV inválido';
+      if (!cvv || cvv.trim() === '') {
+        newErrors.cvv = 'El código de seguridad es requerido';
+      } else if (!/^\d{3,4}$/.test(cvv)) {
+        newErrors.cvv = 'El CVV debe tener 3 o 4 dígitos';
       }
     }
 
@@ -60,10 +78,37 @@ export default function PayPalCheckout({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) {
+    // Validar formulario antes de enviar
+    const isValid = validateForm();
+    
+    if (!isValid) {
+      // El mensaje de error ya se muestra en los campos individuales
+      // Hacer scroll al primer campo con error
+      setTimeout(() => {
+        const firstErrorKey = Object.keys(errors)[0];
+        if (firstErrorKey) {
+          // Buscar el input correspondiente
+          const inputs = document.querySelectorAll('input');
+          let targetInput: HTMLInputElement | null = null;
+          
+          if (firstErrorKey === 'cardNumber') {
+            targetInput = Array.from(inputs).find(input => input.value === cardNumber || input.placeholder.includes('tarjeta')) as HTMLInputElement;
+          } else if (firstErrorKey === 'expiryDate') {
+            targetInput = Array.from(inputs).find(input => input.value === expiryDate || input.placeholder === 'MM/YY') as HTMLInputElement;
+          } else if (firstErrorKey === 'cvv') {
+            targetInput = Array.from(inputs).find(input => input.value === cvv || input.placeholder === '123') as HTMLInputElement;
+          }
+          
+          if (targetInput) {
+            targetInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            targetInput.focus();
+          }
+        }
+      }, 100);
       return;
     }
 
+    // Solo proceder si la validación pasó
     onPaymentSuccess({
       paymentMethod,
       cardNumber: paymentMethod === 'credit' ? cardNumber : undefined,
@@ -87,7 +132,7 @@ export default function PayPalCheckout({
     if (value.length >= 2) {
       value = value.slice(0, 2) + '/' + value.slice(2, 4);
     }
-    setExpiryDate(value || 'MM/YY');
+    setExpiryDate(value);
   };
 
   return (

@@ -36,8 +36,8 @@ export default function LandingNavbar() {
               />
             </div>
             <div>
-              {/* Texto del logo con tipografía más grande (text-3xl) y NORMAL (sans-serif) y formal (font-bold) */}
-              <span className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white transition-colors duration-300">
+              {/* Texto del logo con tipografía Trade Winds (logo-title) */}
+              <span className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white transition-colors duration-300 logo-title">
                 Nocturna Genesis
               </span>
               <p className="text-xs text-gray-500 dark:text-gray-400">Agencia de Vehículos</p>
